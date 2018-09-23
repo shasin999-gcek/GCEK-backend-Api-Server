@@ -30,8 +30,8 @@
 
   } catch(PDOException $e) {
 
-    echo "\nConnection to database $host@$dbname Failed" . $e->getMessage();
-    exit(1);
+    die("\nConnection to database $host@$dbname Failed" . $e->getMessage() . "\n");
+    
   }
   
 

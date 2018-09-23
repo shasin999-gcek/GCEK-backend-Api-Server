@@ -1,0 +1,92 @@
+<?php
+
+  require __DIR__ . '/vendor/autoload.php';
+
+  use Noodlehaus\Config;
+  use Dotenv\Dotenv;
+
+  $dotenv = new Dotenv(__DIR__);
+  $dotenv->load();
+
+  $mode = $_ENV["mode"];
+  $config = Config::load(__DIR__ . "/config/$mode.php");
+
+  $host = $config->get('db.host');
+  $dbname = $config->get('db.dbname');
+  $user = $config->get('db.user');
+  $password = $config->get('db.password');
+	
+
+  // connect to database
+  try {
+
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $user, $password);
+  
+    $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, 0);
+
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    echo "\nConnected to database $host@$dbname successfull";
+
+  } catch(PDOException $e) {
+
+    echo "\nConnection to database $host@$dbname Failed" . $e->getMessage();
+    exit(1);
+  }
+  
+
+  // creating tables
+
+  $createTablesSQL = file_get_contents(__DIR__ . "/.sql/database.sql");
+
+  try {
+
+    $pdo->exec($createTablesSQL);
+    echo "\nCreated Tables in database $host@$dbname";
+
+  } catch(PDOException $e) {
+
+    echo $e->getMessage();
+    die();
+
+  }
+
+
+  // download and insert student details from etlab to database
+
+  $ids = [49, 50, 51, 52, 53, 64, 65, 66, 67, 68, 69, 70, 81, 82, 83, 84, 85, 86, 92, 93, 94, 95, 96, 97];
+
+
+  $stmt = $pdo->prepare("insert into gcek_student_info values(:admission_no, :name, :branch, :batch)");
+
+  foreach($ids as $id) {
+		
+    $student_info = json_decode(file_get_contents("https://etlab.gcek.ac.in/website/json/getstudentlist?id=$id"));
+
+    echo "\nInserting Data: " . $student_info[0]->batch . " to database";
+
+		foreach($student_info as $student) {
+			$batch_info = explode(" ", $student->batch);
+
+	  	$values = array(
+				":admission_no" => $student->admission_no,
+				":name" => $student->name,
+				":branch" => $batch_info[0],
+				":batch" => $batch_info[1]
+			);
+	
+
+      try {
+			  $stmt->execute($values);
+      } catch(PDOException $e) {
+        echo "\n[-] Failed " . $e->getMessage() . "\n";
+        exit;
+      }
+
+		}
+	}
+
+  echo "\nInstallation Successfull ! \n";
+
+  unset($stmt);
+  unset($pdo);

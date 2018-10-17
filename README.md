@@ -35,5 +35,5 @@
   * `php installapp`
 
 
-  * `composer start`
+  * `composer start `
   

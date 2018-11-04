@@ -1,4 +1,7 @@
 <?php
+
+use PHPMailer\PHPMailer\PHPMailer;
+
 // DIC configuration
 
 $container = $app->getContainer();
@@ -27,9 +30,29 @@ $container["notFoundHandler"] = function($c) {
 	return function($request, $response) use ($c) {
 		return $c["response"]
 			->withStatus(404)
-            ->withHeader('Content-Type', 'text/html')
-            ->write('Page not found');
+            ->withJSON(array("status" => "failed", "msg" => "Not Found"));
 	};
+};
+
+// email handler
+
+$container["mail"] = function($c) {
+    $mail = new PHPMailer(true);
+
+    //Server settings
+    $mail->SMTPDebug = 2;                                 // Enable verbose debug output
+    $mail->isSMTP();                                      // Set mailer to use SMTP
+    $mail->Host = 'smtp.gmail.com';  // Specify main and backup SMTP servers
+    $mail->SMTPAuth = true;                               // Enable SMTP authentication
+    $mail->Username = 'bugsmasher2k18@gmail.com';                 // SMTP username
+    $mail->Password = 'bugs2solve';                           // SMTP password
+    $mail->SMTPSecure = 'tls';                            // Enable TLS encryption, `ssl` also accepted
+    $mail->Port = 587;                                    // TCP port to connect to
+
+    $mail->setFrom('no-reply@gcekfb.com', 'GCEK Facebook');
+    $mail->addReplyTo('no-reply@gcekfb.com', 'You cannot replied to this mail');
+
+    return $mail;
 };
 
 

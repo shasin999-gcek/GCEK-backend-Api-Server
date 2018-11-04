@@ -35,23 +35,7 @@
   }
   
 
-  // creating tables
-
-  $createTablesSQL = file_get_contents(__DIR__ . "/.sql/database.sql");
-
-  try {
-
-    $pdo->exec($createTablesSQL);
-    echo "\nCreated Tables in database $host@$dbname";
-
-  } catch(PDOException $e) {
-
-    echo $e->getMessage();
-    die();
-
-  }
-
-
+  
   // download and insert student details from etlab to database
 
   $ids = [49, 50, 51, 52, 53, 64, 65, 66, 67, 68, 69, 70, 81, 82, 83, 84, 85, 86, 92, 93, 94, 95, 96, 97];
@@ -67,6 +51,7 @@
 
 		foreach($student_info as $student) {
 			$batch_info = explode(" ", $student->batch);
+
 
 	  	$values = array(
 				":admission_no" => $student->admission_no,

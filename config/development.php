@@ -11,9 +11,9 @@
 
     "db" => [
       "host" => "127.0.0.1",
-      "dbname" => "homestead",
-      "user" => "homestead",
-      "password" => "secret",
+      "dbname" => "gcekfb",
+      "user" => "root",
+      "password" => "<chechu>",
       "port" => ""
     ]
   ];

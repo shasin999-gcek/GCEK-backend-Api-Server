@@ -13,8 +13,17 @@ Vagrant.configure("2") do |config|
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
   config.vm.box = "laravel/homestead"
-  config.vm.network "private_network", type: "dhcp"
-	
+  #config.vm.network "private_network", type: "dhcp"
+
+
+  config.ssh.insert_key = false
+  config.ssh.private_key_path = ["~/.ssh/id_rsa", "~/.vagrant.d/insecure_private_key"]
+  config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
+  config.ssh.username = "vagrant"
+  config.ssh.password = "vagrant"
+
+
+
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
   # `vagrant box outdated`. This is not recommended.
@@ -32,7 +41,7 @@ Vagrant.configure("2") do |config|
   # via 127.0.0.1 to disable public access
   # config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
 
-  # config.vm.network "forwarded_port", guest: 8000, host: 8000, host_ip: "127.0.0.1"
+  #config.vm.network "forwarded_port", guest: 8000, host: 8000, host_ip: "192.168.42.253"
   # config.vm.network "forwarded_port", guest: 3306, host: 3306, host_ip: "127.0.0.1"
 
 
@@ -43,7 +52,7 @@ Vagrant.configure("2") do |config|
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
   # your network.
-  # config.vm.network "public_network"
+  config.vm.network "public_network"
 
   # Share an additional folder to the guest VM. The first argument is
   # the path on the host to the actual folder. The second argument is

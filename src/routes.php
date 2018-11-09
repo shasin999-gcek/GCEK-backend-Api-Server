@@ -117,25 +117,25 @@ $app->post("/user/login", function(Request $request, Response $response, $args) 
 	
 	if(password_verify($password, $hashedPassword)) {
 
-		$tokenId    = base64_encode(mcrypt_create_iv(32));
-    $issuedAt   = time();
-    $notBefore  = $issuedAt + 10;             //Adding 10 seconds
-    $expire     = $notBefore + 60;            // Adding 60 seconds
-    $serverName = $config->get('serverName'); // Retrieve the server name from config file
-    
-    /*
-     * Create the token as an array
-     */
-    $data = [
-        'iat'  => $issuedAt,         // Issued at: time when the token was generated
-        'jti'  => $tokenId,          // Json Token Id: an unique identifier for the token
-        'iss'  => $serverName,       // Issuer
-        'nbf'  => $notBefore,        // Not before
-        'exp'  => $expire,           // Expire
-        'data' => [                  // Data related to the signer user
-            'userId'   => $user["id"], // userid from the users table
-            'userName' => $username, // User name
-        ]
+		$tokenId    = base64_encode(rand(10000,99999));
+		$issuedAt   = time();
+		$notBefore  = $issuedAt + 10;             //Adding 10 seconds
+		$expire     = $notBefore + 60 * 60 * 24 * 30;            // Adding 60 seconds
+		// $serverName = $this->config->get('serverName'); // Retrieve the server name from config file
+		
+		/*
+		* Create the token as an array
+		*/
+		$data = [
+			'iat'  => $issuedAt,         // Issued at: time when the token was generated
+			'jti'  => $tokenId,          // Json Token Id: an unique identifier for the token
+			'iss'  => $serverName,       // Issuer
+			'nbf'  => $notBefore,        // Not before
+			'exp'  => $expire,           // Expire
+			'data' => [                  // Data related to the signer user
+				'userId'   => $user["id"], // userid from the users table
+				'userName' => $username, // User name
+			]
 		];
 		
 		$secretKey = base64_decode($this->config->get("app.secretKey"));
@@ -146,11 +146,11 @@ $app->post("/user/login", function(Request $request, Response $response, $args) 
 			'HS512'    
 			);
 
-		return $response->withJSON(["jwt" => $jwt]);	
+		return $response->withJSON(["status" => "success", "access_token" => $jwt]);	
 
 	}
 
-		return $response->withJSON(["sds" => "sf"]);
+	return $response->withJSON(["status" => "failed", "msg" => "Username and Password are Incorrect"]);
 });
 
 
@@ -171,3 +171,8 @@ $app->post("/user/verify", function(Request $request, Response $response, $args)
 
   return $response->withJSON(["status" => "failed", "msg" => "Email Verification"]);
 });
+
+
+$app->get('/user/profile', function(Request $request, Response $response) {
+	return $response->withJSON($request->getAttribute("token"));
+})->add($auth);

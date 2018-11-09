@@ -2,6 +2,7 @@
 
 use Slim\Http\Request;
 use Slim\Http\Response;
+use \Firebase\JWT\JWT;
 
 // Routes
 
@@ -94,7 +95,7 @@ $app->post("/user/login", function(Request $request, Response $response, $args) 
 	}
 
 	// check whether the username exists
-	$stmt = $this->db->prepare("SELECT login_id, password, verified, blocked from users WHERE login_id=:username");
+	$stmt = $this->db->prepare("SELECT id, login_id, password, verified, blocked from users WHERE login_id=:username");
 
 	$stmt->execute(array(":username" => $username));
 
@@ -108,15 +109,65 @@ $app->post("/user/login", function(Request $request, Response $response, $args) 
 		return $response->withJSON(["status" => "failed", "msg" => "User with login id $username not verified"]);
 	}
 
-	if(!$user["blocked"]) {
+	if($user["blocked"]) {
 		return $response->withJSON(["status" => "failed", "msg" => "User with login id $username blocked"]);
 	}
 
 	$hashedPassword = $user["password"];
 	
 	if(password_verify($password, $hashedPassword)) {
-		return $response->withJSON(["status" => "logged in"]);
+
+		$tokenId    = base64_encode(mcrypt_create_iv(32));
+    $issuedAt   = time();
+    $notBefore  = $issuedAt + 10;             //Adding 10 seconds
+    $expire     = $notBefore + 60;            // Adding 60 seconds
+    $serverName = $config->get('serverName'); // Retrieve the server name from config file
+    
+    /*
+     * Create the token as an array
+     */
+    $data = [
+        'iat'  => $issuedAt,         // Issued at: time when the token was generated
+        'jti'  => $tokenId,          // Json Token Id: an unique identifier for the token
+        'iss'  => $serverName,       // Issuer
+        'nbf'  => $notBefore,        // Not before
+        'exp'  => $expire,           // Expire
+        'data' => [                  // Data related to the signer user
+            'userId'   => $user["id"], // userid from the users table
+            'userName' => $username, // User name
+        ]
+		];
+		
+		$secretKey = base64_decode($this->config->get("app.secretKey"));
+
+		$jwt = JWT::encode(
+			$data,      //Data to be encoded in the JWT
+			$secretKey, // The signing key
+			'HS512'    
+			);
+
+		return $response->withJSON(["jwt" => $jwt]);	
+
 	}
 
+		return $response->withJSON(["sds" => "sf"]);
 });
 
+
+$app->post("/user/verify", function(Request $request, Response $response, $args) {
+	$username = $request->getParsedBodyParam('username');
+	$verify_code = $request->getParsedBodyParam("verify_code");
+
+	$stmt = $this->db->prepare("SELECT email_verify_token FROM users WHERE login_id=?");
+	$stmt->execute(array($username));
+	$resultset = $stmt->fetch(PDO::FETCH_ASSOC);
+
+	if($resultset["email_verify_token"] == $verify_code) {
+		$stmt = $this->db->prepare("UPDATE users SET verified=:isVerified WHERE login_id=:login_id");
+		$stmt->execute(array("isVerified" => "1", "login_id" => $username));
+
+		return $response->withJSON(["status" => "success", "msg" => "Email Verified Successfully"]);
+	}
+
+  return $response->withJSON(["status" => "failed", "msg" => "Email Verification"]);
+});

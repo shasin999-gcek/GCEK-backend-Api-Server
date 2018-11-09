@@ -6,7 +6,8 @@
       "hash" => [
         "algo" => PASSWORD_BCRYPT,
         "cost" => 1000
-      ]
+      ],
+      "secretKey" => "uNRjKTIP+Oawpl5/d6n0S/84ITB7SbPXLs9NxImgiYL4nQoaFnNdL9NAjKRTYQJK1XdLoDFA66iOP3k5IuPFyA=="
     ],
 
     "db" => [

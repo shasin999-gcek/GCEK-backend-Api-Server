@@ -39,8 +39,7 @@ $container["notFoundHandler"] = function($c) {
 $container["mail"] = function($c) {
     $mail = new PHPMailer(true);
 
-    //Server settings
-    $mail->SMTPDebug = 2;                                 // Enable verbose debug output
+    //Server settings                            // Enable verbose debug output
     $mail->isSMTP();                                      // Set mailer to use SMTP
     $mail->Host = 'smtp.gmail.com';  // Specify main and backup SMTP servers
     $mail->SMTPAuth = true;                               // Enable SMTP authentication

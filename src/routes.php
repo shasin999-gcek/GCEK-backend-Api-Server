@@ -158,13 +158,28 @@ $app->post("/user/verify", function(Request $request, Response $response, $args)
 	$username = $request->getParsedBodyParam('username');
 	$verify_code = $request->getParsedBodyParam("verify_code");
 
-	$stmt = $this->db->prepare("SELECT email_verify_token FROM users WHERE login_id=?");
+	$stmt = $this->db->prepare("SELECT * FROM users WHERE login_id=?");
 	$stmt->execute(array($username));
 	$resultset = $stmt->fetch(PDO::FETCH_ASSOC);
 
 	if($resultset["email_verify_token"] == $verify_code) {
 		$stmt = $this->db->prepare("UPDATE users SET verified=:isVerified WHERE login_id=:login_id");
 		$stmt->execute(array("isVerified" => "1", "login_id" => $username));
+
+		$stmt = $this->db->prepare("SELECT * FROM gcek_student_info WHERE admission_no=?");
+		$stmt->execute(array($username));
+		$studentInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+
+		$stmt = $this->db
+			->prepare("INSERT INTO user_profiles(user_id, username, fullname, batch, branch) VALUES (:user_id, :username, :fullname, :batch, :branch)");
+
+		$stmt->execute(array(
+			":user_id" => $resultset["id"],
+			":username" => strtolower(str_replace(" ", "-", trim($studentInfo["name"]))),
+			":fullname" => $studentInfo["name"],
+			":batch" => $studentInfo["batch"],
+			":branch" => $studentInfo["branch"]
+		));
 
 		return $response->withJSON(["status" => "success", "msg" => "Email Verified Successfully"]);
 	}
